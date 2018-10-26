@@ -78,6 +78,7 @@ def parse_in_stmt():
         new_node.add_child(parse_id())
         new_node.add_child(check_next_token(')'))
         new_node.add_child(check_next_token(';'))
+        return new_node
     except Exception as e:
         print(e)
 
@@ -106,7 +107,15 @@ def parse_decl_stmt():
     pass
 
 def parse_block():
-    pass
+    new_node = TreeNode('BLOCK')
+    try:
+        new_node.add_child(check_next_token('{'))
+        while get_next_token().name!='}':
+            new_node.add_child(parse_stmt())
+        new_node.add_child(check_next_token('}'))
+        return new_node
+    except Exception as e:
+        print(e)
 
 def parse_assign_stmt():
     pass

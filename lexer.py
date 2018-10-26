@@ -90,6 +90,10 @@ def scan(row,line):
         elif str.isdigit(row[index]):
             while str.isdigit(row[index]):
                 index+=1
+            if row[index]=='.' and str.isdigit(row[index+1]):
+                index += 1
+                while str.isdigit(row[index]):
+                    index += 1
             tokens.append(Token('NUM', row[start:index], (line, index)))
         elif row[index] == '"':#处理字符串
             index+=1

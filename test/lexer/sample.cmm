@@ -9,7 +9,7 @@ while(a < c){
     /*testing
     multiple-line
     comments*/
-
+    b = 1.23;
     a = 1-2;
     c = (5+3)*4.8;
     string str_1 = "asd123"//字符串类型
