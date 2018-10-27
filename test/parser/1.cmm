@@ -1,6 +1,12 @@
-{
-out("asd");
-}
-a = "asdf12";
 int a,b;
-string[2] as_1;
+string[2] c,d;
+a=2;
+b=1.2+2*3/2;
+c[1]="asdf";
+if(a<2 && b<>3){
+    out(a+b);
+    in(d);
+}
+while(!(a<1+3*2)){
+    a=a+1;
+}
