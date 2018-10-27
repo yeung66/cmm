@@ -191,13 +191,24 @@ def parse_condition():
     condition_node = TreeNode('CONDITION')
     if get_next_token().name=='!':
         condition_node.add_child(check_next_token('!'))
+        condition_node.add_child(check_next_token('('))
         condition_node.add_child(parse_condition())
+        condition_node.add_child(check_next_token(')'))
     else:
         condition_node.add_child(parse_cond())
         if get_next_token().name in ['&&','||']:
-            condition_node.add_child(check_next_token(get_next_token().name))
-            condition_node.add_child(parse_condition)
+            condition_node.add_child(parse_other_condition())
     return condition_node
+
+
+def parse_other_condition():
+    other_condition = TreeNode('OTHERCONDITION')
+    other_condition.add_child(check_next_token(get_next_token().name))
+    other_condition.add_child(parse_cond())
+    if get_next_token().name in ['&&', '||']:
+        other_condition.add_child(parse_other_condition())
+    return other_condition
+
 
 
 @except_process
@@ -211,9 +222,15 @@ def parse_compare():
 
 def parse_cond():
     cond_node = TreeNode('COND')
-    cond_node.add_child(parse_expr())
-    cond_node.add_child(parse_compare())
-    cond_node.add_child(parse_expr())
+    if get_next_token().name=='!':
+        cond_node.add_child(check_next_token('!'))
+        cond_node.add_child(check_next_token('('))
+        cond_node.add_child(parse_cond())
+        cond_node.add_child(check_next_token(')'))
+    else:
+        cond_node.add_child(parse_expr())
+        cond_node.add_child(parse_compare())
+        cond_node.add_child(parse_expr())
     return cond_node
 
 
