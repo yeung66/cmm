@@ -136,9 +136,27 @@ def parse_out_stmt():
     new_node.add_child(check_next_token(';'))
     return new_node
 
+@except_process
 def parse_decl_stmt():
-    cur_token = get_next_token()
-    skip_next_token()
+    id_token = get_next_token()
+    decl_node = TreeNode('VARDECL')
+    type_node = TreeNode('TYPE')
+    decl_node.add_child(type_node)
+    type_node.add_child(check_next_token(id_token.name))
+    next_token = get_next_token()
+    if next_token.name=='[':
+        type_node.add_child(check_next_token('['))
+        num_token = get_next_token()
+        if num_token.type!='NUM':
+            raise ParseException('Line %d: length of array should be a constant number'%num_token.pos[0])
+        type_node.add_child(check_next_token(num_token.name))
+        type_node.add_child(check_next_token(']'))
+    decl_node.add_child(parse_id())
+    while get_next_token().name==',':
+        decl_node.add_child(check_next_token(','))
+        decl_node.add_child(parse_id())
+    decl_node.add_child(check_next_token(';'))
+    return decl_node
 
 
 @except_process
@@ -170,9 +188,36 @@ def parse_expr():
 
 
 def parse_condition():
-    pass
+    condition_node = TreeNode('CONDITION')
+    if get_next_token().name=='!':
+        condition_node.add_child(check_next_token('!'))
+        condition_node.add_child(parse_condition())
+    else:
+        condition_node.add_child(parse_cond())
+        if get_next_token().name in ['&&','||']:
+            condition_node.add_child(check_next_token(get_next_token().name))
+            condition_node.add_child(parse_condition)
+    return condition_node
 
 
+@except_process
+def parse_compare():
+    token = get_next_token()
+    if token.name in ['<','<=','==','<>']:
+        return TreeNode(token.name)
+    else:
+        raise ParseException('Line %d: token should be a compare operand'%token.pos[0])
+
+
+def parse_cond():
+    cond_node = TreeNode('COND')
+    cond_node.add_child(parse_expr())
+    cond_node.add_child(parse_compare())
+    cond_node.add_child(parse_expr())
+    return cond_node
+
+
+@except_process
 def parse_var():
     token = get_next_token()
     node = TreeNode('VAR')
@@ -187,8 +232,17 @@ def parse_var():
     else:
         raise ParseException('line %d: token should be a identifier'%token.pos[0])
 
+@except_process
+def parse_id():
+    id_token = get_next_token()
+    if id_token.type != 'ID':
+        raise ParseException('Line %d: token should be a identifier' % id_token.pos[0])
+    skip_next_token()
+    return TreeNode(id_token.name)
 
-
+@except_process
+def parse_cond():
+    pass
 
 if __name__ == '__main__':
     filename = input('please input the cmm file name\n')

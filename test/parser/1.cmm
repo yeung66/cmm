@@ -2,3 +2,5 @@
 out("asd");
 }
 a = "asdf12";
+int a,b;
+string[2] as_1;
