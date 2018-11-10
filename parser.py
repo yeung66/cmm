@@ -15,12 +15,14 @@ class TreeNode:
         self.type = type
         self.child = []
         self.value = None
+        self.indent = 0
 
     def add_child(self,node):
         if self.child is not None:
             self.child.append(node)
 
     def print_tree(self):
+        self.indent = TreeNode.indent
         prefix = '    ' * TreeNode.indent + '|---'
         if self.type=='root':
             prefix =''
@@ -101,7 +103,7 @@ def parse_stmt():
     elif token.type=='ID':
         return parse_assign_stmt()
     else:
-        raise ParseException("line %d: position %d unpected token"%token.pos)
+        raise ParseException("line %d: position %d unpected token started"%token.pos)
 
 
 def parse_if_stmt():
@@ -181,7 +183,7 @@ def parse_decl_stmt():
     if next_token.name=='[':
         type_node.add_child(check_next_token('['))
         num_token = get_next_token()
-        if num_token.type!='NUM':
+        if num_token.type!='NUM' or '.' in num_token.name:
             raise ParseException('Line %d: length of array should be a constant number'%num_token.pos[0])
         num_node = TreeNode('NUM')
         num_node.value = num_token.name
