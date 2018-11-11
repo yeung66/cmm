@@ -1,4 +1,4 @@
-int a,b;
+int a=23,b;
 string[2] c,d;
 a=2;
 b=1.2+2*3/2;

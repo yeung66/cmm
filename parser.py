@@ -180,20 +180,29 @@ def parse_decl_stmt():
     decl_node.add_child(type_node)
     type_node.add_child(check_next_token(type_token.name))
     next_token = get_next_token()
-    if next_token.name=='[':
+    if next_token.name=='[':#判断声明是否为数组
         type_node.add_child(check_next_token('['))
         num_token = get_next_token()
-        if num_token.type!='NUM' or '.' in num_token.name:
+        if num_token.type!='NUM' or '.' in num_token.name:#声明数组长度时需为正整数
             raise ParseException('Line %d: length of array should be a constant number'%num_token.pos[0])
         num_node = TreeNode('NUM')
         num_node.value = num_token.name
         type_node.add_child(num_node)
         skip_next_token()
         type_node.add_child(check_next_token(']'))
-    decl_node.add_child(parse_id())
-    while get_next_token().name==',':
-        decl_node.add_child(check_next_token(','))
-        decl_node.add_child(parse_id())
+    id = parse_id()
+    decl_node.add_child(id)
+    next_name = get_next_token().name
+    assfunc = parse_str if type_token.type=='STR' else parse_expr
+    while next_name in [',','=']:
+        if next_name=='=':
+            id.add_child(check_next_token('='))
+            id.add_child(assfunc())
+        else:
+            decl_node.add_child(check_next_token(','))
+            id = parse_id()
+            decl_node.add_child(id)
+        next_name = get_next_token().name
     decl_node.add_child(check_next_token(';'))
     return decl_node
 
@@ -395,4 +404,4 @@ if __name__ == '__main__':
     filename = input('please input the cmm file name\n')
     roots=parser(filename)
     roots.print_tree()
-
+    input("press enter key to quit")
