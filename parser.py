@@ -111,13 +111,13 @@ def parse_if_stmt():
     解析if语句
     '''
     node = TreeNode('IFSTMT')
-    node.add_child(check_next_token('if'))
-    node.add_child(check_next_token('('))
+    check_next_token('if')
+    check_next_token('(')
     node.add_child(parse_condition())
-    node.add_child(check_next_token(')'))
+    check_next_token(')')
     node.add_child(parse_stmt())
     if get_next_token().name=='else':
-        node.add_child('else')
+        check_next_token('else')
         node.add_child(parse_stmt())
     return node
 
@@ -128,10 +128,10 @@ def parse_while_stmt():
     解析while语句
     '''
     node = TreeNode('WHILESTMT')
-    node.add_child(check_next_token('while'))
-    node.add_child(check_next_token('('))
+    check_next_token('while')
+    check_next_token('(')
     node.add_child(parse_condition())
-    node.add_child(check_next_token(')'))
+    check_next_token(')')
     node.add_child(parse_stmt())
     return node
 
@@ -142,11 +142,11 @@ def parse_in_stmt():
     解析输入语句
     '''
     new_node = TreeNode('INSTMT')
-    new_node.add_child(check_next_token('in'))
-    new_node.add_child(check_next_token('('))
+    check_next_token('in')
+    check_next_token('(')
     new_node.add_child(parse_var())
-    new_node.add_child(check_next_token(')'))
-    new_node.add_child(check_next_token(';'))
+    check_next_token(')')
+    check_next_token(';')
     return new_node
 
 
@@ -156,16 +156,16 @@ def parse_out_stmt():
     解析输出语句
     '''
     new_node = TreeNode('OUTSTMT')
-    new_node.add_child(check_next_token('out'))
-    new_node.add_child(check_next_token('('))
+    check_next_token('out')
+    check_next_token('(')
 
     token = get_next_token()
     if token.type=='STR':
         new_node.add_child(parse_str())
     else:
         new_node.add_child(parse_expr())
-    new_node.add_child(check_next_token(')'))
-    new_node.add_child(check_next_token(';'))
+    check_next_token(')')
+    check_next_token(';')
     return new_node
 
 
@@ -181,7 +181,7 @@ def parse_decl_stmt():
     type_node.add_child(check_next_token(type_token.name))
     next_token = get_next_token()
     if next_token.name=='[':#判断声明是否为数组
-        type_node.add_child(check_next_token('['))
+        check_next_token('[')
         num_token = get_next_token()
         if num_token.type!='NUM' or '.' in num_token.name:#声明数组长度时需为正整数
             raise ParseException('Line %d: length of array should be a constant number'%num_token.pos[0])
@@ -189,21 +189,21 @@ def parse_decl_stmt():
         num_node.value = num_token.name
         type_node.add_child(num_node)
         skip_next_token()
-        type_node.add_child(check_next_token(']'))
+        check_next_token(']')
     id = parse_id()
     decl_node.add_child(id)
     next_name = get_next_token().name
     assfunc = parse_str if type_token.type=='STR' else parse_expr
     while next_name in [',','=']:
         if next_name=='=':
-            id.add_child(check_next_token('='))
+            check_next_token('=')
             id.add_child(assfunc())
         else:
-            decl_node.add_child(check_next_token(','))
+            check_next_token(',')
             id = parse_id()
             decl_node.add_child(id)
         next_name = get_next_token().name
-    decl_node.add_child(check_next_token(';'))
+    check_next_token(';')
     return decl_node
 
 
@@ -213,10 +213,10 @@ def parse_block():
     解析语句块
     '''
     new_node = TreeNode('BLOCK')
-    new_node.add_child(check_next_token('{'))
+    check_next_token('{')
     while get_next_token().name!='}':
         new_node.add_child(parse_stmt())
-    new_node.add_child(check_next_token('}'))
+    check_next_token('}')
     return new_node
 
 
@@ -227,13 +227,13 @@ def parse_assign_stmt():
     '''
     node = TreeNode('ASSIGNSTMT')
     node.add_child(parse_var())
-    node.add_child(check_next_token('='))
+    check_next_token('=')
     token = get_next_token()
     if token.type=='STR':
         node.add_child(parse_str())
     else:
         node.add_child(parse_expr())
-    node.add_child(check_next_token(';'))
+    check_next_token(';')
     return node
 
 
@@ -275,9 +275,9 @@ def parse_factor():
         node.add_child(rnode)
         skip_next_token()
     elif token.name=='(':
-        node.add_child(check_next_token('('))
+        check_next_token('(')
         node.add_child(parse_expr())
-        node.add_child(check_next_token(')'))
+        check_next_token(')')
     else:
         node.add_child(parse_var())
     return node
@@ -290,9 +290,9 @@ def parse_condition():
     condition_node = TreeNode('CONDITION')
     if get_next_token().name=='!':
         condition_node.add_child(check_next_token('!'))
-        condition_node.add_child(check_next_token('('))
+        check_next_token('(')
         condition_node.add_child(parse_condition())
-        condition_node.add_child(check_next_token(')'))
+        check_next_token(')')
     else:
         condition_node.add_child(parse_cond())
         while get_next_token().name in ['&&','||']:
@@ -330,9 +330,9 @@ def parse_cond():
     cond_node = TreeNode('COND')
     if get_next_token().name=='!':
         cond_node.add_child(check_next_token('!'))
-        cond_node.add_child(check_next_token('('))
+        check_next_token('(')
         cond_node.add_child(parse_cond())
-        cond_node.add_child(check_next_token(')'))
+        check_next_token(')')
     else:
         cond_node.add_child(parse_expr())
         cond_node.add_child(parse_compare())
@@ -351,9 +351,9 @@ def parse_var():
         node.add_child(parse_id())
         next_token = get_next_token()
         if next_token.name=='[':
-            node.add_child(check_next_token('['))
+            check_next_token('[')
             node.add_child(parse_expr())
-            node.add_child(check_next_token(']'))
+            check_next_token(']')
         return node
     else:
         raise ParseException('line %d: token should be a identifier'%token.pos[0])
