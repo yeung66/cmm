@@ -1,38 +1,9 @@
 from lexer import *
 from functools import wraps
+from model import TreeNode
+from exception import ParseException
 
 tokens_index = 0
-
-
-class ParseException(Exception):
-    def __init__(self,mes):
-        Exception.__init__(self,mes)
-
-
-class TreeNode:
-    indent = 0
-    def __init__(self,type):
-        self.type = type
-        self.child = []
-        self.value = None
-        self.indent = 0
-
-    def add_child(self,node):
-        if self.child is not None:
-            self.child.append(node)
-
-    def print_tree(self):
-        self.indent = TreeNode.indent
-        prefix = '    ' * TreeNode.indent + '|---'
-        if self.type=='root':
-            prefix =''
-        value = self.value if self.value else self.type
-        print(prefix,value)
-        if self.child is not None:
-            TreeNode.indent+=1
-            for c in self.child:
-                c.print_tree()
-            TreeNode.indent-=1
 
 
 def except_process(func):
@@ -44,7 +15,7 @@ def except_process(func):
         try:
             return func(*args,**kwargs)
         except ParseException as e:
-            print(e)
+            print('ParserException in ',e)
             exit(-1)
     return f
 

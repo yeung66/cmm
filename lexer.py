@@ -1,19 +1,12 @@
 from os.path import exists,isfile
 from sys import exit
+from model import Token
 
 KEYWORD = ['if','else','while','int','float','string','in','out']
 OPERATOR = ['+','-','*','/','=','<','<=','==','<>','&','|','^','&&','||','!']
 BLOCK = ['[',']','(',')','{','}',';','"',',','.']
 tokens = []
 
-class Token:
-    def __init__(self,type,name,pos):
-        self.type = type
-        self.name = name
-        self.pos = pos
-
-    def output(self):
-        print('(%d, %s, %s)'%(self.pos[0],self.name,self.type))
 
 def remove_comment(resource):
     """
