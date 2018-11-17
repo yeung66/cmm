@@ -1,6 +1,7 @@
 from os.path import exists,isfile
 from sys import exit
 from model import Token
+from exception import except_process,LexerException
 
 KEYWORD = ['if','else','while','int','float','string','in','out']
 OPERATOR = ['+','-','*','/','=','<','<=','==','<>','&','|','^','&&','||','!']
@@ -8,6 +9,7 @@ BLOCK = ['[',']','(',')','{','}',';','"',',','.']
 tokens = []
 
 
+@except_process(LexerException)
 def remove_comment(resource):
     """
     删除注释及无用字符（保留换行符以后续记录行号
@@ -18,34 +20,35 @@ def remove_comment(resource):
     pos = 0
     rowlines = 1
     startline = rowlines
-    try:
-        while pos<len(resource):
-            if resource[pos]=='/' and resource[pos+1]=='/':
-                while resource[pos]!='\n':
-                    pos+=1
-            elif resource[pos]=='/' and resource[pos+1]=='*':
-                pos+=2
-                startline = rowlines
+
+    while pos<len(resource):
+        if resource[pos]=='/' and resource[pos+1]=='/':
+            while resource[pos]!='\n':
+                pos+=1
+        elif resource[pos]=='/' and resource[pos+1]=='*':
+            pos+=2
+            startline = rowlines
+            try:
                 while resource[pos]!='*' or resource[pos+1]!='/':
                     if resource[pos]=='\n':#移除注释仍保留原始行位置
                         rowlines+=1
                         code_without_comment.append('\n')
                     pos+=1
-                pos+=2
-            if pos==len(resource):break#防止多行注释在最后一行造成越界
-            if resource[pos] not in ['\t','\v','\r']:
-                code_without_comment.append(resource[pos])
-                rowlines = rowlines+1 if resource[pos]=='\n' else rowlines
-            pos+=1
-    except Exception:
-        #多行注释未正确结束
-        print('line %d: comment not end rightly'%startline)
-        exit(-1)
+            except IndexError:
+                # 多行注释未正确结束
+                raise LexerException('line %d: comment not end rightly'%startline)
+            pos+=2
+        if pos==len(resource):break#防止多行注释在最后一行造成越界
+        if resource[pos] not in ['\t','\v','\r']:
+            code_without_comment.append(resource[pos])
+            rowlines = rowlines+1 if resource[pos]=='\n' else rowlines
+        pos+=1
     return ''.join(code_without_comment)
 
 def isLetter(char):
     return 'a'<=char<='z' or 'A'<=char<='Z'
 
+@except_process(LexerException)
 def scan(row,line):
     """
     核心函数，输入单行字符串以识别token，并将其添加至全局变量处
@@ -67,8 +70,7 @@ def scan(row,line):
         if isLetter(row[index]):#识别标识符
             if index!=0 and str.isdigit(row[index-1]) or row[index]=='_':
                 #判断标识符是否合法
-                print('illegal identifier in line %d'%line)
-                exit(-1)
+                raise LexerException('line %d: illegal identifier'%line)
             index+=1
             while isLetter(row[index]) or str.isdigit(row[index]) or row[index]=='_':
                 index+=1
@@ -77,8 +79,8 @@ def scan(row,line):
                 tokens.append(Token('KEYWORD',token_str,(line,index)))
             else:
                 if token_str[-1]=='_':
-                    print('illegal identifier in line %d'%line)
-                    exit(-1)
+                    # 判断标识符是否合法
+                    raise LexerException('line %d: illegal identifier' % line)
                 tokens.append(Token('ID',token_str,(line,index)))
         elif str.isdigit(row[index]):
             while str.isdigit(row[index]):
@@ -93,8 +95,8 @@ def scan(row,line):
             while index<len(row) and row[index]!='"':
                 index+=1
             if index==len(row):
-                print('string not end rightly in line %d! '%line)
-                exit(-1)
+                # 判断字符串是否正确闭合
+                raise LexerException('line %d: string not end rightly! '%line)
             else:
                 index+=1
                 tokens.append(Token('STR',row[start:index],(line,index)))
@@ -134,8 +136,9 @@ def scan(row,line):
             tokens.append(Token(type,row[index],(line,index)))
             index+=1
         else:
-            print('unknown word appear in line %d, index %d'%(line,index))
-            exit(-1)
+            # 判断字符串是否正确闭合
+            raise LexerException('line %d, index %d: unknown word appear'%(line,index))
+
 
 def lexer(filename):
     """

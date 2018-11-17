@@ -1,23 +1,8 @@
 from lexer import *
-from functools import wraps
 from model import TreeNode
-from exception import ParseException
+from exception import ParseException, except_process
 
 tokens_index = 0
-
-
-def except_process(func):
-    '''
-    函数装饰器，用于处理分析过程中出现异常，将其打印，并结束程序
-    '''
-    @wraps(func)
-    def f(*args,**kwargs):
-        try:
-            return func(*args,**kwargs)
-        except ParseException as e:
-            print('ParserException in ',e)
-            exit(-1)
-    return f
 
 
 def get_next_token():
@@ -53,7 +38,8 @@ def check_next_token(token_name):
     else:
         raise ParseException('line %d: unpected token,should be %s'%(tokens[tokens_index].pos[0],token_name))
 
-@except_process
+
+@except_process(ParseException)
 def parse_stmt():
     """
     解析各种语句以及语句块
@@ -93,7 +79,6 @@ def parse_if_stmt():
     return node
 
 
-@except_process
 def parse_while_stmt():
     '''
     解析while语句
@@ -107,7 +92,6 @@ def parse_while_stmt():
     return node
 
 
-@except_process
 def parse_in_stmt():
     '''
     解析输入语句
@@ -121,7 +105,6 @@ def parse_in_stmt():
     return new_node
 
 
-@except_process
 def parse_out_stmt():
     '''
     解析输出语句
@@ -140,7 +123,6 @@ def parse_out_stmt():
     return new_node
 
 
-@except_process
 def parse_decl_stmt():
     '''
     解析声明语句
@@ -178,7 +160,6 @@ def parse_decl_stmt():
     return decl_node
 
 
-@except_process
 def parse_block():
     '''
     解析语句块
@@ -191,7 +172,6 @@ def parse_block():
     return new_node
 
 
-@except_process
 def parse_assign_stmt():
     '''
     解析赋值语句
@@ -223,6 +203,7 @@ def parse_expr():
             node.add_child(parse_term())
     return node
 
+
 def parse_term():
     '''
     解析表达式中单个项
@@ -233,6 +214,7 @@ def parse_term():
         node.add_child(check_next_token(get_next_token().name))
         node.add_child(parse_factor())
     return node
+
 
 def parse_factor():
     '''
@@ -272,17 +254,7 @@ def parse_condition():
     return condition_node
 
 
-# def parse_other_condition():
-#     other_condition = TreeNode('OTHERCONDITION')
-#     other_condition.add_child(check_next_token(get_next_token().name))
-#     other_condition.add_child(parse_cond())
-#     if get_next_token().name in ['&&', '||']:
-#         other_condition.add_child(parse_other_condition())
-#     return other_condition
 
-
-
-@except_process
 def parse_compare():
     '''
     解析比较运算符
@@ -311,7 +283,6 @@ def parse_cond():
     return cond_node
 
 
-@except_process
 def parse_var():
     '''
     解析变量，包括标识符及数组元素
@@ -329,7 +300,7 @@ def parse_var():
     else:
         raise ParseException('line %d: token should be a identifier'%token.pos[0])
 
-@except_process
+
 def parse_id():
     '''
     解析标识符
