@@ -7,7 +7,7 @@ while(!(a<1+3*2)){
     a=a+1;
     if(a<2 && b<>3){
     out(a+b);
-    in(d);
+    in(d[0]);
     }else if(a<4){
     out(a);
     }

@@ -15,10 +15,15 @@ class TreeNode:
         self.child = []
         self.value = None
         self.indent = 0
+        self.line = 0
 
     def add_child(self,node):
         if self.child is not None:
             self.child.append(node)
+
+    def get_child(self,i):
+        if self.child:
+            return self.child[i]
 
     def print_tree(self):
         self.indent = TreeNode.indent
@@ -45,5 +50,21 @@ class FourCode:
         if isinstance(key,int) and 0<key<4:
             self.__code[key]=value
 
+    def __str__(self):
+        return '(%10s, %10s,%10s,%10s)'%self.get_code()
+
     def get_code(self):
         return tuple(self.__code)
+
+
+class Symbol:
+    def __init__(self,name,type,level):
+        self.name = name
+        self.type = type
+        self.level = level
+        self.next = None
+        self.arr = None
+        self.declare_line = None
+
+    def is_array(self):
+        return self.arr is not None

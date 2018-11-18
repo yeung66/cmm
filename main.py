@@ -1,4 +1,4 @@
-from parser import tokens_index,parse_stmt
+from parse import tokens_index,parse_stmt
 from lexer import *
 
 

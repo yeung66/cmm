@@ -31,9 +31,11 @@ def check_next_token(token_name):
     if tokens_index>=len(tokens):
         raise ParseException('lack of token %s at the end of code'%token_name)
     if tokens[tokens_index].name==token_name:
-        tokens_index+=1
+
         node = TreeNode(token_name)
+        node.line = tokens[tokens_index].pos[0]
         node.child=None
+        tokens_index+=1
         return node
     else:
         raise ParseException('line %d: unpected token,should be %s'%(tokens[tokens_index].pos[0],token_name))
@@ -68,6 +70,7 @@ def parse_if_stmt():
     解析if语句
     '''
     node = TreeNode('IFSTMT')
+    node.line = tokens[tokens_index].pos[0]
     check_next_token('if')
     check_next_token('(')
     node.add_child(parse_condition())
@@ -84,6 +87,7 @@ def parse_while_stmt():
     解析while语句
     '''
     node = TreeNode('WHILESTMT')
+    node.line = tokens[tokens_index].pos[0]
     check_next_token('while')
     check_next_token('(')
     node.add_child(parse_condition())
@@ -97,6 +101,7 @@ def parse_in_stmt():
     解析输入语句
     '''
     new_node = TreeNode('INSTMT')
+    new_node.line = tokens[tokens_index].pos[0]
     check_next_token('in')
     check_next_token('(')
     new_node.add_child(parse_var())
@@ -110,6 +115,7 @@ def parse_out_stmt():
     解析输出语句
     '''
     new_node = TreeNode('OUTSTMT')
+    new_node.line = tokens[tokens_index].pos[0]
     check_next_token('out')
     check_next_token('(')
 
@@ -130,6 +136,8 @@ def parse_decl_stmt():
     type_token = get_next_token()
     decl_node = TreeNode('VARDECL')
     type_node = TreeNode('TYPE')
+    decl_node.line = tokens[tokens_index].pos[0]
+    type_node.line = tokens[tokens_index].pos[0]
     decl_node.add_child(type_node)
     type_node.add_child(check_next_token(type_token.name))
     next_token = get_next_token()
@@ -139,6 +147,7 @@ def parse_decl_stmt():
         if num_token.type!='NUM' or '.' in num_token.name:#声明数组长度时需为正整数
             raise ParseException('Line %d: length of array should be a constant number'%num_token.pos[0])
         num_node = TreeNode('NUM')
+        num_node.line = tokens[tokens_index].pos[0]
         num_node.value = num_token.name
         type_node.add_child(num_node)
         skip_next_token()
@@ -165,6 +174,7 @@ def parse_block():
     解析语句块
     '''
     new_node = TreeNode('BLOCK')
+    new_node.line = tokens[tokens_index].pos[0]
     check_next_token('{')
     while get_next_token().name!='}':
         new_node.add_child(parse_stmt())
@@ -177,6 +187,7 @@ def parse_assign_stmt():
     解析赋值语句
     '''
     node = TreeNode('ASSIGNSTMT')
+    node.line = tokens[tokens_index].pos[0]
     node.add_child(parse_var())
     check_next_token('=')
     token = get_next_token()
@@ -193,6 +204,7 @@ def parse_expr():
     解析表达式
     '''
     node = TreeNode('EXPR')
+    node.line = tokens[tokens_index].pos[0]
     if get_next_token().name=='-':
         node.add_child(check_next_token('-'))
         node.add_child(parse_expr())
@@ -209,6 +221,7 @@ def parse_term():
     解析表达式中单个项
     '''
     node = TreeNode('TERM')
+    node.line = tokens[tokens_index].pos[0]
     node.add_child(parse_factor())
     while get_next_token().name in ['*', '/']:
         node.add_child(check_next_token(get_next_token().name))
@@ -221,9 +234,11 @@ def parse_factor():
     解析项中单个因子
     '''
     node = TreeNode('FACTOR')
+    node.line = tokens[tokens_index].pos[0]
     token = get_next_token()
     if token.type=='NUM':
         rnode = TreeNode('NUM')
+        rnode.line = tokens[tokens_index].pos[0]
         rnode.value = token.name
         node.add_child(rnode)
         skip_next_token()
@@ -241,6 +256,7 @@ def parse_condition():
     解析整个条件布尔值
     '''
     condition_node = TreeNode('CONDITION')
+    condition_node.line = tokens[tokens_index].pos[0]
     if get_next_token().name=='!':
         condition_node.add_child(check_next_token('!'))
         check_next_token('(')
@@ -261,7 +277,9 @@ def parse_compare():
     '''
     token = get_next_token()
     if token.name in ['<','<=','==','<>']:
-        return check_next_token(token.name)
+        node = check_next_token(token.name)
+        node.line = tokens[tokens_index].pos[0]
+        return node
     else:
         raise ParseException('Line %d: token should be a compare operand'%token.pos[0])
 
@@ -271,6 +289,7 @@ def parse_cond():
     解析单个条件布尔项
     '''
     cond_node = TreeNode('COND')
+    cond_node.line = tokens[tokens_index].pos[0]
     if get_next_token().name=='!':
         cond_node.add_child(check_next_token('!'))
         check_next_token('(')
@@ -289,6 +308,7 @@ def parse_var():
     '''
     token = get_next_token()
     node = TreeNode('VAR')
+    node.line = tokens[tokens_index].pos[0]
     if token.type=='ID':
         node.add_child(parse_id())
         next_token = get_next_token()
@@ -310,6 +330,7 @@ def parse_id():
         raise ParseException('Line %d: token should be a identifier' % id_token.pos[0])
     skip_next_token()
     rnode = TreeNode('ID')
+    rnode.line = tokens[tokens_index].pos[0]
     rnode.value = id_token.name
     return rnode
 
@@ -320,6 +341,7 @@ def parse_str():
     '''
     if get_next_token().type=='STR':
         rnode = TreeNode('STR')
+        rnode.line = tokens[tokens_index].pos[0]
         rnode.value = get_next_token().name
         skip_next_token()
         return rnode
@@ -327,7 +349,7 @@ def parse_str():
         raise ParseException('Line %d: token should be a string '%get_next_token().pos[0])
 
 
-def parser(filename):
+def parse(filename):
     '''
     语法分析主控程序，调用词法分析后，使用递归下降分析方法，不断进行语法分析，直至到tokens用完
     :param filename:
@@ -344,6 +366,6 @@ def parser(filename):
 
 if __name__ == '__main__':
     filename = input('please input the cmm file name\n')
-    roots=parser(filename)
+    roots=parse(filename)
     roots.print_tree()
     input("press enter key to quit")

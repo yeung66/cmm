@@ -1,5 +1,5 @@
 from functools import wraps
-
+from sys import exit
 
 class ParseException(Exception):
     def __init__(self,mes):
@@ -7,6 +7,11 @@ class ParseException(Exception):
 
 
 class LexerException(Exception):
+    def __init__(self,mes):
+        Exception.__init__(self,mes)
+
+
+class SemanticException(Exception):
     def __init__(self,mes):
         Exception.__init__(self,mes)
 
@@ -22,7 +27,7 @@ def except_process(t):
             try:
                 return func(*args,**kwargs)
             except t as e:
-                s = {ParseException:'ParseException',LexerException:'LexerException'}
+                s = {ParseException:'ParseException',LexerException:'LexerException',SemanticException:'SemanticException'}
                 print(s[t],'in',e)
                 exit(-1)
         return f

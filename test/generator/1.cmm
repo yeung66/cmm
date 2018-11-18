@@ -1,0 +1,11 @@
+int a=23,b;
+string[2] c,d;
+b=12+3*2;
+out("asd");
+if(a<1){
+ int a =3*1.2+56;
+ in(b);
+}
+while(!(b<2)){
+
+}
