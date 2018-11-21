@@ -23,6 +23,7 @@ def enter_level():
 def quit_level():
     global level_count
     add_code(FourCode('OUT', None, None, None))
+    clear_symbol_level(level_count)
     level_count-=1
 
 
@@ -32,13 +33,14 @@ def get_symbol_in_table(node):
     if isinstance(node,TreeNode):
         id = node.value
         prefix = 'line %d: '%node.line
-
-    for sym in symbol_table['symbol_list']:
-        if sym.name ==id:
-            return sym
-    for sym in symbol_table['temp_list']:
-        if sym.name ==id:
-            return sym
+    if not id.startswith('*'):
+        for sym in symbol_table['symbol_list']:
+            if sym.name ==id:
+                return sym
+    else:
+        for sym in symbol_table['temp_list']:
+            if sym.name ==id:
+                return sym
     raise SemanticException('%s variable %s is not declared'%(prefix,id))
 
 
@@ -54,6 +56,7 @@ def get_temp_symbol(type):
             insert_symbol(symbol,'temp_list')
             return symbol.name
 
+
 def insert_symbol(symbol,type='symbol_list'):
 
     for i,sym in enumerate(symbol_table[type]):
@@ -64,6 +67,18 @@ def insert_symbol(symbol,type='symbol_list'):
             symbol_table[type][i] = symbol
             return
     symbol_table[type].append(symbol)
+
+
+def clear_symbol_level(level):
+    """退出层级代码块后清除该层声明的变量"""
+    for i,s in enumerate(symbol_table['symbol_list']):
+        if s.level == level:
+            symbol_table['symbol_list'][i]=s.next
+    symbol_table['symbol_list'] = list(filter(None,symbol_table['symbol_list']))
+
+
+def clear_temp_symbol():
+    symbol_table['temp_list'] = []
 
 
 def is_str_symbol_from_expr(value):
@@ -96,6 +111,7 @@ def interpret(node):
         interpret_declare(node)
     elif node.type == 'ASSIGNSTMT':
         interpret_assign(node)
+    clear_temp_symbol()
 
 
 def interpret_ifstmt(node):
@@ -156,7 +172,7 @@ def interpret_declare(node):
         length = type.get_child(1).value
         for i in node.child[1:]:
             add_code(FourCode(type.get_child(0).type,i.value,length,None))
-            symbol = Symbol(i.value,type.get_child(0),level_count)
+            symbol = Symbol(i.value,type.get_child(0).type,level_count)
             symbol.arr = []
             symbol.declare_line = node.line
             insert_symbol(symbol)
@@ -164,7 +180,7 @@ def interpret_declare(node):
         for i in node.child[1:]:
             value = interpret_expr(i.get_child(0)) if i.child else None
             add_code(FourCode(type.get_child(0).type,i.value,None,value))
-            symbol = Symbol(i.value, type.get_child(0), level_count)
+            symbol = Symbol(i.value, type.get_child(0).type, level_count)
             symbol.declare_line = node.line
             insert_symbol(symbol)
 
@@ -188,7 +204,7 @@ def interpret_assign(node):
 
     if symbol.is_array() or len(varnode.child)==2:
         if symbol.is_array() and len(varnode.child)==2:
-            index = interpret_index(varnode.get_child(1))
+            index = interpret_index(varnode)
             code[1] = code[1]+'['+index+']'
         else:
             arr = '' if symbol.is_array() else 'not '
@@ -201,7 +217,7 @@ def interpret_index(node):
     index = interpret_expr(node.get_child(1))
     if is_str_symbol_from_expr(index):  # 用字符串变量作下标
         raise SemanticException('Line %d: cannot use a string variable as index' % node.line)
-    if type(index) == float:# 用浮点数变量作下标
+    if match(r'\d+.\d+',index):# 用浮点数变量作下标
         raise SemanticException('Line %d: cannot use a float point number as index' % node.line)
     return index
 
@@ -300,10 +316,13 @@ def interpret_factor(node):
         return interpret_expr(child)
 
 
-if __name__ == '__main__':
-    filename = input('please input the cmm file name\n')
+def generate(filename):
     roots = parse(filename)
     for c in roots.child:
         interpret(c)
-    for i,c in enumerate(codes):
+    return codes
+
+if __name__ == '__main__':
+    filename = input('please input the cmm file name\n')
+    for i,c in enumerate(generate(filename)):
         print('%3d: '%i,c)
