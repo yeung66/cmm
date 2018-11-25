@@ -1,6 +1,6 @@
+from entity.model import TreeNode
 from lexer import *
-from model import TreeNode
-from exception import ParseException, except_process
+from util.exception import ParseException, except_process
 
 tokens_index = 0
 

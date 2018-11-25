@@ -1,12 +1,13 @@
-from parse import parse
-from model import FourCode,Symbol,TreeNode
-from exception import except_process,SemanticException
 from re import match
+from entity.model import FourCode
+from parse import parse
+from util.SymbolTable import *
+from util.exception import except_process
 
 codes = [] #存放中间代码四元式
-symbol_table = {'symbol_list':[],'temp_list':[]} #符号表
 line_count = 0 #记录四元式行数
 level_count = 0 #记录代码/变量所在层次
+
 
 def add_code(fourcode):
     global line_count
@@ -27,66 +28,17 @@ def quit_level():
     level_count-=1
 
 
-def get_symbol_in_table(node):
-    id = node
-    prefix = ''
-    if isinstance(node,TreeNode):
-        id = node.value
-        prefix = 'line %d: '%node.line
-    if not id.startswith('*'):
-        for sym in symbol_table['symbol_list']:
-            if sym.name ==id:
-                return sym
-    else:
-        for sym in symbol_table['temp_list']:
-            if sym.name ==id:
-                return sym
-    raise SemanticException('%s variable %s is not declared'%(prefix,id))
-
-
-def get_temp_symbol(type):
-    for i in range(1000):
-        name = '*temp'+str(i)
-        exist = False
-        for s in symbol_table['temp_list']:
-            if s.name==name:
-                exist=True
-        if not exist:
-            symbol = Symbol(name,type,level_count)
-            insert_symbol(symbol,'temp_list')
-            return symbol.name
-
-
-def insert_symbol(symbol,type='symbol_list'):
-
-    for i,sym in enumerate(symbol_table[type]):
-        if sym.name == symbol.name:
-            if sym.level >= symbol.level:
-                raise SemanticException('line %d: variable %s has been declared'%(symbol.declare_line,symbol.name))
-            symbol.next = sym
-            symbol_table[type][i] = symbol
-            return
-    symbol_table[type].append(symbol)
-
-
-def clear_symbol_level(level):
-    """退出层级代码块后清除该层声明的变量"""
-    for i,s in enumerate(symbol_table['symbol_list']):
-        if s.level == level:
-            symbol_table['symbol_list'][i]=s.next
-    symbol_table['symbol_list'] = list(filter(None,symbol_table['symbol_list']))
-
-
-def clear_temp_symbol():
-    symbol_table['temp_list'] = []
-
-
 def is_str_symbol_from_expr(value):
     #判断表达式解析得到的结果是否字符串（当表达式只有单个string变量时会出现
-    if type(value) == str and not match(r'\d+.?\d*',value):
-        temp_sym = get_symbol_in_table(value)
+    if type(value) == str and not is_num(value):
+        temp_sym = get_symbol_in_table(value) if '[' not in value else get_symbol_in_table(value[:value.index('[')])
         return temp_sym.type == 'string'
     return False
+
+
+def is_num(string):
+    """判断字符串是否为数字形式"""
+    return match('-?\d+(.\d+)?',string)
 
 
 @except_process(SemanticException)
@@ -152,18 +104,24 @@ def interpret_readstmt(node):
         if len(varnode.child) == 2:#变量为数组成员
             if not symbol.is_array():
                 raise SemanticException('line %d: variable %s is not an array'%(node.line,symbol.name))
-            index = interpret_index(varnode.get_child(1))
-            add_code(FourCode('READ',None,None,varnode.get_child(0).value+'[%d]'%index))
+            index = interpret_index(varnode)
+            four_code = FourCode('READ',None,None,varnode.get_child(0).value+'[%s]'%str(index))
         else:
-            add_code(FourCode('READ',None,None,varnode.get_child(0).value))
+            four_code = FourCode('READ',None,None,varnode.get_child(0).value)
+        four_code.line = node.line
+        add_code(four_code)
 
 
 def interpret_outstmt(node):
     if node.type == 'OUTSTMT':
         if node.get_child(0).type == 'STR':
-            add_code(FourCode('WRTIE',None,0,node.get_child(0).value))
+            four_code = FourCode('WRITE',None,0,node.get_child(0).value)
         else:
-            add_code(FourCode('WRTIE', None, 1, interpret_expr(node)))
+            expr = interpret_expr(node.get_child(0))
+            four_code = FourCode('WRITE', None, 1, expr)
+            if is_num(expr): four_code[2] = 0
+        four_code.line = node.line
+        add_code(four_code)
 
 
 def interpret_declare(node):
@@ -197,9 +155,9 @@ def interpret_assign(node):
         code[3] = value_node.value
     else:
         value = interpret_expr(value_node)
-        if is_str_symbol_from_expr(value):#将字符串赋值给数值变量
+        if is_str_symbol_from_expr(value) and symbol.type!='string':#将字符串赋值给数值变量
             raise SemanticException('Line %d: not match type in assignment statement' % node.line)
-        code[2] = 1
+        code[2] = 1 if not is_num(value) else 0
         code[3] = value
 
     if symbol.is_array() or len(varnode.child)==2:
@@ -225,7 +183,8 @@ def interpret_index(node):
 def interpret_condition(node):
     if node.get_child(0).type=='!':#取反
         result = get_temp_symbol('bool')
-        add_code(FourCode('!',interpret_condition(node.get_child(1)),None,result))
+        code = FourCode('!',interpret_condition(node.get_child(1)),None,result)
+        add_code(code)
         return result
     else:
         if len(node.child)==1:
@@ -242,9 +201,9 @@ def interpret_condition(node):
                         add_code(FourCode('!',last_operand,None,temp))
                         jmp = FourCode('JMP',temp,None,None)
                     add_code(jmp)
-                    add_code(FourCode(cond,last_operand,interpret_cond(node.get_child(i+1)),last_operand))
+                    add_code(FourCode(cond.type,last_operand,interpret_cond(node.get_child(i+1)),last_operand))
                     jmp[3] = line_count
-                    return last_operand
+            return last_operand
 
 
 def interpret_cond(node):
@@ -291,7 +250,9 @@ def interpret_term(node):
                 if is_str_symbol_from_expr(next_operand):
                     raise SemanticException('Line %d: string cannot in operation!' % node.line)
                 temp = get_temp_symbol('NUM')
-                add_code(FourCode(op.type, last_operand, next_operand, temp))
+                code = FourCode(op.type, last_operand, next_operand, temp)
+                add_code(code)
+                code.line = node.line
                 last_operand = temp
         return last_operand
 
@@ -305,9 +266,7 @@ def interpret_factor(node):
         if symbol.is_array() or len(child.child) == 2:
             if symbol.is_array() and len(child.child) == 2: #数组元素
                 index = interpret_index(child)
-                temp = get_temp_symbol(symbol.type)
-                add_code(FourCode('ASSIGN',temp,1,symbol.name + '[' + index + ']'))
-                return temp
+                return symbol.name+'[%s]'%str(index)
             else:
                 arr = '' if symbol.is_array() else 'not '
                 raise SemanticException('Line %d: variable %s is %san array!' % (node.line, node.value, arr))
@@ -317,6 +276,7 @@ def interpret_factor(node):
 
 
 def generate(filename):
+    init_symbol_table()
     roots = parse(filename)
     for c in roots.child:
         interpret(c)

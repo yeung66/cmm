@@ -1,11 +1,12 @@
 from os.path import exists,isfile
 from sys import exit
-from model import Token
-from exception import except_process,LexerException
+
+from entity.model import Token
+from util.exception import except_process,LexerException
 
 KEYWORD = ['if','else','while','int','float','string','in','out']
-OPERATOR = ['+','-','*','/','=','<','<=','==','<>','&','|','^','&&','||','!']
-BLOCK = ['[',']','(',')','{','}',';','"',',','.']
+OPERATOR = ['+','-','*','/','=','<','<=','==','<>','&&','||','!']
+BLOCK = ['[',']','(',')','{','}',';','"',',']
 tokens = []
 
 
@@ -117,26 +118,18 @@ def scan(row,line):
             else:
                 tokens.append(Token('OPERATOR', '<', (line, index)))
                 index+=1
-        elif row[index]=='|':
-            if row[index+1]=='|':
-                tokens.append(Token('OPERATOR', '||', (line, index)))
-                index+=1
-            else:
-                tokens.append(Token('OPERATOR', '|', (line, index)))
-            index+=1
-        elif row[index]=='&':
-            if row[index+1]=='&':
-                tokens.append(Token('OPERATOR', '&&', (line, index)))
-                index+=1
-            else:
-                tokens.append(Token('OPERATOR', '&', (line, index)))
-            index+=1
+        elif row[index:index+2]=='||':
+            tokens.append(Token('OPERATOR', '||', (line, index)))
+            index+=2
+        elif row[index:index+2]=='&&':
+            tokens.append(Token('OPERATOR', '&&', (line, index)))
+            index+=2
         elif row[index] in OPERATOR or row[index] in BLOCK:
             type = 'OPERATOR' if row[index] in OPERATOR else 'BLOCK'
             tokens.append(Token(type,row[index],(line,index)))
             index+=1
         else:
-            # 判断字符串是否正确闭合
+            # 未知符号无法识别
             raise LexerException('line %d, index %d: unknown word appear'%(line,index))
 
 

@@ -16,6 +16,10 @@ class SemanticException(Exception):
         Exception.__init__(self,mes)
 
 
+class RunningError(Exception):
+    def __init__(self,mes):
+        Exception.__init__(self,mes)
+
 def except_process(t):
     '''
     函数装饰器，用于处理分析过程中出现异常，将其打印，并结束程序
@@ -27,7 +31,12 @@ def except_process(t):
             try:
                 return func(*args,**kwargs)
             except t as e:
-                s = {ParseException:'ParseException',LexerException:'LexerException',SemanticException:'SemanticException'}
+                s = {
+                    ParseException:'ParseException',
+                    LexerException:'LexerException',
+                    SemanticException:'SemanticException',
+                    RunningError:'RunningError',
+                     }
                 print(s[t],'in',e)
                 exit(-1)
         return f

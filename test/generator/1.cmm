@@ -1,7 +1,9 @@
 int a=23,b;
 string[2] c,d;
 b=12+3*2;
+out(12);
 out("asd");
+out(c[1]);
 if(a<1){
  int a =3*1.2+56;
  c[1] = "sfa";
@@ -9,5 +11,5 @@ if(a<1){
 }
 while(!(b<2)){
     float a=1.2;
-    b=b+1;
+    b=b-1;
 }

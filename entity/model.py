@@ -41,13 +41,14 @@ class TreeNode:
 class FourCode:
     def __init__(self,first,second,third,fourth):
         self.__code = [first,second,third,fourth]
+        self.line = None
 
     def __getitem__(self, item):
-        if isinstance(item,int) and 0<item<4:
+        if isinstance(item,int) and -1<item<4:
             return self.__code[item]
 
     def __setitem__(self, key, value):
-        if isinstance(key,int) and 0<key<4:
+        if isinstance(key,int) and -1<key<4:
             self.__code[key]=value
 
     def __str__(self):
@@ -65,6 +66,7 @@ class Symbol:
         self.next = None
         self.arr = None
         self.declare_line = None
+        self.value = None
 
     def is_array(self):
         return self.arr is not None
