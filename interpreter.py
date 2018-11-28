@@ -2,7 +2,7 @@ from re import match
 from code_generator import generate, is_num
 from util.SymbolTable import get_symbol_in_table, insert_symbol, init_symbol_table,symbol_table
 from entity.model import Symbol
-from util.exception import RunningError,except_process
+from util.exception import RunningError,except_process,output_exception,skip_exception
 
 cur_code = 0
 level_count = 0 #记录代码/变量所在层次
@@ -54,23 +54,25 @@ def is_index_valid(symbol,index):
             raise RunningError('Line %d: variable %s\'s index should be a non-negetive integer'%(symbol.declare_line,symbol.name))
 
 
-@except_process(RunningError)
 def interpret_fourcode(code):
     global cur_code,level_count
-    type = code[0]
-    if type == 'JMP':
-        if code[1] is None or not get_symbol_in_table(code[1]).value:
-            cur_code = code[3]
-            return
-    elif type == 'IN': level_count+=1
-    elif type == 'OUT': level_count-=1
-    elif type == 'READ': interpret_fourcode_read(code)
-    elif type == 'WRITE': interpret_fourcode_write(code)
-    elif type == 'ASSIGN': interpret_fourcode_assign(code)
-    elif type in ['int','float','string']: interpret_fourcode_declare(code)
-    else: interpret_fourcode_op(code)
-
-    cur_code +=1
+    try:
+        type = code[0]
+        if type == 'JMP':
+            if code[1] is None or not get_symbol_in_table(code[1]).value:
+                cur_code = code[3] - 1
+                return
+        elif type == 'IN': level_count+=1
+        elif type == 'OUT': level_count-=1
+        elif type == 'READ': interpret_fourcode_read(code)
+        elif type == 'WRITE': interpret_fourcode_write(code)
+        elif type == 'ASSIGN': interpret_fourcode_assign(code)
+        elif type in ['int','float','string']: interpret_fourcode_declare(code)
+        else: interpret_fourcode_op(code)
+    except Exception as e:
+        skip_exception(RunningError,e)
+    finally:
+        cur_code+=1
 
 
 def interpret_fourcode_read(code):
@@ -102,6 +104,7 @@ def interpret_fourcode_read(code):
 def interpret_fourcode_write(code):
     if code[2]: #输出一个变量的值
         _ , value = get_var_value(code[3])
+        value = str(value)
         print(value[1:-1] if '"' in value else value)
     else:
         if '"' in code[3]:
@@ -116,6 +119,9 @@ def interpret_fourcode_assign(code):
         from_symbol, value = get_var_value(code[3])
     else:#直接将四元式第四项的内容赋给变量
         value = code[3]
+    if is_num(str(value)) and to_symbol.type=='string':
+        raise RunningError('Line %d: not match type in assignment statement'%code.line)
+    if to_symbol.type=='int':value=int(value)
     if to_isarr:
         to_symbol.declare_line = code.line
         to_index = is_index_valid(to_symbol,to_isarr)
@@ -142,6 +148,8 @@ def interpret_fourcode_declare(code):
 def interpret_fourcode_op(code):
     op = code[0]
     v1, v2 = get_value(code[1]), get_value(code[2])
+    if type(v1)==str or type(v2)==str:
+        raise RunningError('Line %d: string cannot in expression!'%code.line)
     value = None
     if op == '!':
         value = not v1 #逻辑取反
@@ -177,6 +185,7 @@ def run():
     init_symbol_table()
     while cur_code<len(codes):
         interpret_fourcode(codes[cur_code])
+    output_exception()
 
 
 

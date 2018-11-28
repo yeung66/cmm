@@ -2,7 +2,7 @@ from re import match
 from entity.model import FourCode
 from parse import parse
 from util.SymbolTable import *
-from util.exception import except_process
+from util.exception import except_process,skip_exception
 
 codes = [] #存放中间代码四元式
 line_count = 0 #记录四元式行数
@@ -41,29 +41,37 @@ def is_num(string):
     return match('-?\d+(.\d+)?',string)
 
 
-@except_process(SemanticException)
 def interpret(node):
     """
     解析每一个语句节点或块节点
     :param node:
     :return:
     """
-    if node.type == 'IFSTMT':
-        interpret_ifstmt(node)
-    elif node.type == 'BLOCK':
-        for child in node.child:
-            interpret(child)
-    elif node.type == 'WHILESTMT':
-        interpret_whilestmt(node)
-    elif node.type == 'INSTMT':
-        interpret_readstmt(node)
-    elif node.type == 'OUTSTMT':
-        interpret_outstmt(node)
-    elif node.type == 'VARDECL':
-        interpret_declare(node)
-    elif node.type == 'ASSIGNSTMT':
-        interpret_assign(node)
-    clear_temp_symbol()
+    global line_count
+    startlines = line_count
+    try:
+        if node.type == 'IFSTMT':
+            interpret_ifstmt(node)
+        elif node.type == 'BLOCK':
+            for child in node.child:
+                interpret(child)
+        elif node.type == 'WHILESTMT':
+            interpret_whilestmt(node)
+        elif node.type == 'INSTMT':
+            interpret_readstmt(node)
+        elif node.type == 'OUTSTMT':
+            interpret_outstmt(node)
+        elif node.type == 'VARDECL':
+            interpret_declare(node)
+        elif node.type == 'ASSIGNSTMT':
+            interpret_assign(node)
+        clear_temp_symbol()
+    except Exception as e:
+        global codes
+        codes = codes[:startlines]
+        line_count = startlines
+        clear_temp_symbol()
+        skip_exception(SemanticException,e)
 
 
 def interpret_ifstmt(node):
@@ -147,6 +155,7 @@ def interpret_assign(node):
     varnode = node.get_child(0)
     symbol = get_symbol_in_table(varnode.get_child(0))
     code = FourCode('ASSIGN',symbol.name,None,None)
+    code.line = node.line
     value_node = node.get_child(1)
     if value_node.type=='STR':
         if symbol.type!='string':#将数值赋给字符串
@@ -157,9 +166,10 @@ def interpret_assign(node):
         value = interpret_expr(value_node)
         if is_str_symbol_from_expr(value) and symbol.type!='string':#将字符串赋值给数值变量
             raise SemanticException('Line %d: not match type in assignment statement' % node.line)
+        if symbol.type == 'string' and not is_str_symbol_from_expr(value):
+            raise SemanticException('Line %d: not match type in assignment statement' % node.line)
         code[2] = 1 if not is_num(value) else 0
         code[3] = value
-
     if symbol.is_array() or len(varnode.child)==2:
         if symbol.is_array() and len(varnode.child)==2:
             index = interpret_index(varnode)
@@ -167,7 +177,6 @@ def interpret_assign(node):
         else:
             arr = '' if symbol.is_array() else 'not '
             raise SemanticException('Line %d: variable %s is %san array!'%(node.line,node.value,arr))
-
     add_code(code)
 
 
@@ -212,25 +221,38 @@ def interpret_cond(node):
         add_code(FourCode('!', interpret_cond(node.get_child(1)), None, result))
         return result
     else:
-        add_code(FourCode(node.get_child(1).type,interpret_expr(node.get_child(0)),interpret_expr(node.get_child(2)),result))
+        op1 = interpret_expr(node.get_child(0))
+        op2 = interpret_expr(node.get_child(2))
+        if is_str_symbol_from_expr(op1) or is_str_symbol_from_expr(op2):
+            raise SemanticException('Line %d: string cannot in operation!'%node.line)
+        add_code(FourCode(node.get_child(1).type, op1, op2, result))
         return result
 
 
 def interpret_expr(node):
     if node.get_child(0).type == '-':  #取负数
         result = get_temp_symbol('num')
-        add_code(FourCode('-',interpret_expr(node.get_child(1)),None,result))
+        c = FourCode('-',interpret_expr(node.get_child(1)),None,result)
+        c.line = node.line
+        add_code(c)
         return result
     else:
         if len(node.child)==1:
             return interpret_term(node.get_child(0))
         else:
             last_operand = interpret_term(node.get_child(0))
+            if is_str_symbol_from_expr(last_operand):
+                raise SemanticException('Line %d: string cannot in operation!' % node.line)
             for i,op in enumerate(node.child):
                 if op.type=='TERM':continue
                 else:
+                    next_operand = interpret_term(node.get_child(i+1))
+                    if is_str_symbol_from_expr(next_operand):
+                        raise SemanticException('Line %d: string cannot in operation!' % node.line)
                     temp_symbol = get_temp_symbol('NUM')
-                    add_code(FourCode(op.type,last_operand,interpret_term(node.get_child(i+1)),temp_symbol))
+                    c = FourCode(op.type,last_operand,next_operand,temp_symbol)
+                    c.line = node.line
+                    add_code(c)
                     last_operand = temp_symbol
             return last_operand
 
@@ -242,6 +264,7 @@ def interpret_term(node):
         last_operand = interpret_factor(node.get_child(0))
         if is_str_symbol_from_expr(last_operand):
             raise SemanticException('Line %d: string cannot in operation!'%node.line)
+
         for i, op in enumerate(node.child):
             if op.type == 'FACTOR':
                 continue

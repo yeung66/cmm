@@ -1,12 +1,27 @@
 int[10] a;
+float b;
+string c;
 a[0] = 12+3;
 a[1] = 12-3;
 a[2] = 12*3;
 a[3] = 12/4;
-
+out("input a number for a[4]");
+in(a[4]);
+//错误测试
+//类型不匹配
+//a[6] = "sadfsa";//字符串赋给数值变量
+//c = a[1];//数值赋给字符串
+//out(d);//使用未声明变量
+//float b;//同一层级声明同名变量
+//out(a[c]);//使用字符串作为下标
+//a[6] = b+c;//字符串参与运算
+//a[6] = 12 / 0;
+//a[11] = 45;
 
 int i=0;
-while(i<5){
-out(a[i]);
-i=i+1;
+out("Print the first 5 elements which is above 0:");
+while(i<=4){
+    if(0<a[i])
+        out(a[i]);
+    i=i+1;
 }

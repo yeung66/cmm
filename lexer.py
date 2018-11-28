@@ -46,8 +46,10 @@ def remove_comment(resource):
         pos+=1
     return ''.join(code_without_comment)
 
+
 def isLetter(char):
     return 'a'<=char<='z' or 'A'<=char<='Z'
+
 
 @except_process(LexerException)
 def scan(row,line):

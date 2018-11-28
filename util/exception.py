@@ -1,6 +1,8 @@
 from functools import wraps
 from sys import exit
 
+exceptions = []
+
 class ParseException(Exception):
     def __init__(self,mes):
         Exception.__init__(self,mes)
@@ -41,3 +43,19 @@ def except_process(t):
                 exit(-1)
         return f
     return f1
+
+def skip_exception(t,e):
+    exceptions.append((t,e))
+
+
+def output_exception():
+    s = {
+        ParseException: 'ParseException',
+        LexerException: 'LexerException',
+        SemanticException: 'SemanticException',
+        RunningError: 'RunningError',
+    }
+    if len(exceptions)!=0:
+        print('Exceptions:')
+        for t,e in exceptions:
+            print(s[t],' in ',e)
