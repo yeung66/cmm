@@ -3,7 +3,7 @@ from lexer import *
 from util.exception import ParseException, except_process
 
 tokens_index = 0
-
+exception_bofore = None
 
 def get_next_token():
     '''
@@ -31,7 +31,6 @@ def check_next_token(token_name):
     if tokens_index>=len(tokens):
         raise ParseException('lack of token %s at the end of code'%token_name)
     if tokens[tokens_index].name==token_name:
-
         node = TreeNode(token_name)
         node.line = tokens[tokens_index].pos[0]
         node.child=None
@@ -41,28 +40,46 @@ def check_next_token(token_name):
         raise ParseException('line %d: unpected token,should be %s'%(tokens[tokens_index].pos[0],token_name))
 
 
-@except_process(ParseException)
+def clear_exception():
+    global exception_bofore
+    if exception_bofore is not None:
+        exception_bofore = None
+
+
 def parse_stmt():
     """
     解析各种语句以及语句块
     """
     token = get_next_token()
-    if token.name=='if':
-        return parse_if_stmt()
-    elif token.name=='while':
-        return parse_while_stmt()
-    elif token.name=='in':
-        return parse_in_stmt()
-    elif token.name=='out':
-        return parse_out_stmt()
-    elif token.name in ['int','float','string']:
-        return parse_decl_stmt()
-    elif token.name=='{':
-        return parse_block()
-    elif token.type=='ID':
-        return parse_assign_stmt()
-    else:
-        raise ParseException("line %d: position %d unpected token started"%token.pos)
+    try:
+        result = None
+        if token.name=='if':
+            result = parse_if_stmt()
+        elif token.name=='while':
+            result = parse_while_stmt()
+        elif token.name=='in':
+            result = parse_in_stmt()
+        elif token.name=='out':
+            result = parse_out_stmt()
+        elif token.name in ['int','float','string']:
+            result = parse_decl_stmt()
+        elif token.name=='{':
+            result = parse_block()
+        elif token.type=='ID':
+            result = parse_assign_stmt()
+        if result is not None:
+            clear_exception()
+            return result
+        else:
+            skip_next_token()
+            raise ParseException("line %d: position %d unpected token %s started"%(token.pos[0],token.pos[1],token.name))
+    except ParseException as e:
+        #当有异常出现时，判断是否语句的第一个异常，是则记录，并且该语句的后续错误均跳过，直到下一个可正确识别的句子为止
+        global exception_bofore
+        if exception_bofore is None:
+            exception_bofore = e
+            skip_exception(ParseException,e)
+        if token.name in [';', '}']: clear_exception()
 
 
 def parse_if_stmt():
@@ -75,11 +92,13 @@ def parse_if_stmt():
     check_next_token('(')
     node.add_child(parse_condition())
     check_next_token(')')
-    node.add_child(parse_stmt())
+    temp = parse_stmt()
+    if temp:node.add_child(temp)
     if get_next_token().name=='else':
         check_next_token('else')
-        node.add_child(parse_stmt())
-    return node
+        temp = parse_stmt()
+        if temp: node.add_child(temp)
+    return node if temp is not None else None
 
 
 def parse_while_stmt():
@@ -92,8 +111,9 @@ def parse_while_stmt():
     check_next_token('(')
     node.add_child(parse_condition())
     check_next_token(')')
-    node.add_child(parse_stmt())
-    return node
+    temp = parse_stmt()
+    if temp: node.add_child(temp)
+    return node if temp is not None else None
 
 
 def parse_in_stmt():
@@ -145,7 +165,7 @@ def parse_decl_stmt():
         check_next_token('[')
         num_token = get_next_token()
         if num_token.type!='NUM' or '.' in num_token.name:#声明数组长度时需为正整数
-            raise ParseException('Line %d: length of array should be a constant number'%num_token.pos[0])
+            raise ParseException('Line %d: length of array should be a positive constant number'%num_token.pos[0])
         num_node = TreeNode('NUM')
         num_node.line = tokens[tokens_index].pos[0]
         num_node.value = num_token.name
@@ -155,7 +175,7 @@ def parse_decl_stmt():
     id = parse_id()
     decl_node.add_child(id)
     next_name = get_next_token().name
-    assfunc = parse_str if type_token.type=='STR' else parse_expr
+    assfunc = parse_str if type_token.name=='string' else parse_expr
     while next_name in [',','=']:
         if next_name=='=':
             check_next_token('=')
@@ -177,7 +197,8 @@ def parse_block():
     new_node.line = tokens[tokens_index].pos[0]
     check_next_token('{')
     while get_next_token().name!='}':
-        new_node.add_child(parse_stmt())
+        stmt = parse_stmt()
+        if stmt:new_node.add_child(stmt)
     check_next_token('}')
     return new_node
 
@@ -359,7 +380,8 @@ def parse(filename):
     tokens.append(Token('END','END',None))
     roots = TreeNode('root')
     while tokens_index < len(tokens)-1:
-        roots.add_child(parse_stmt())
+        result = parse_stmt()
+        if result:roots.add_child(result)
     tokens.pop(-1)
     return roots
 
@@ -368,4 +390,5 @@ if __name__ == '__main__':
     filename = input('please input the cmm file name\n')
     roots=parse(filename)
     roots.print_tree()
+    output_exception()
     input("press enter key to quit")

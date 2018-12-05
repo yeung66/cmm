@@ -6,7 +6,7 @@ class Token:
         self.pos = pos
 
     def output(self):
-        print('(%d, %s, %s)'%(self.pos[0],self.name,self.type))
+        print('(%3d  %15s %15s)'%(self.pos[0],self.name,self.type))
 
 class TreeNode:
     indent = 0

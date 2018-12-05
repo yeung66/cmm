@@ -25,6 +25,7 @@ def get_symbol_in_table(node):
                 return sym
         temp = Symbol(id,'temp',0)
         insert_symbol(temp,type='temp_list')
+        temp.value = 0
         return temp
     raise SemanticException('%s variable %s is not declared'%(prefix,id))
 

@@ -5,7 +5,7 @@ while(a < c){
         int a,b,c;
         int array[10];
     }
-    //中文不能识别
+    中文不能识别
     /*testing
     multiple-line
     comments*/

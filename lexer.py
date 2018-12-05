@@ -2,7 +2,7 @@ from os.path import exists,isfile
 from sys import exit
 
 from entity.model import Token
-from util.exception import except_process,LexerException
+from util.exception import except_process,LexerException,skip_exception,output_exception
 
 KEYWORD = ['if','else','while','int','float','string','in','out']
 OPERATOR = ['+','-','*','/','=','<','<=','==','<>','&&','||','!']
@@ -24,7 +24,7 @@ def remove_comment(resource):
 
     while pos<len(resource):
         if resource[pos]=='/' and resource[pos+1]=='/':
-            while resource[pos]!='\n':
+            while pos < len(resource) and resource[pos]!='\n':
                 pos+=1
         elif resource[pos]=='/' and resource[pos+1]=='*':
             pos+=2
@@ -70,21 +70,26 @@ def scan(row,line):
         if row[index]==' ':#读入空白字符则跳过
             index+=1
             continue
-        if isLetter(row[index]):#识别标识符
+        if isLetter(row[index]) or (row[index]=='_' and isLetter(row[index+1])):#识别标识符
+            e = None
             if index!=0 and str.isdigit(row[index-1]) or row[index]=='_':
                 #判断标识符是否合法
-                raise LexerException('line %d: illegal identifier'%line)
+                e = 'line %d: illegal identifier name first with underline or digit'%line
+                #raise LexerException('line %d: illegal identifier'%line)
             index+=1
             while isLetter(row[index]) or str.isdigit(row[index]) or row[index]=='_':
                 index+=1
             token_str = row[start:index]
+            if e is not None: skip_exception(LexerException,e)
             if token_str in KEYWORD:
                 tokens.append(Token('KEYWORD',token_str,(line,index)))
             else:
                 if token_str[-1]=='_':
                     # 判断标识符是否合法
-                    raise LexerException('line %d: illegal identifier' % line)
-                tokens.append(Token('ID',token_str,(line,index)))
+                    e = True
+                    skip_exception(LexerException, LexerException('line %d: illegal identifier %s end with underline' % (line,token_str)))
+                if e is None:
+                    tokens.append(Token('ID',token_str,(line,index)))
         elif str.isdigit(row[index]):
             while str.isdigit(row[index]):
                 index+=1
@@ -132,7 +137,8 @@ def scan(row,line):
             index+=1
         else:
             # 未知符号无法识别
-            raise LexerException('line %d, index %d: unknown word appear'%(line,index))
+            skip_exception(LexerException, LexerException('line %d, index %d: unknown word %s appear'%(line,index,row[index])))
+            index+=1
 
 
 def lexer(filename):
@@ -158,4 +164,5 @@ if __name__ == '__main__':
     lexer(filename)
     for t in tokens:
         t.output()
+    output_exception()
     input('\npress enter key to quit')
