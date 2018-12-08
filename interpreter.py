@@ -55,6 +55,7 @@ def is_index_valid(symbol,index):
 
 
 def interpret_fourcode(code):
+    """四元式核心主函数，遇到错误则记录并跳到下一条四元式"""
     global cur_code,level_count
     try:
         type = code[0]
@@ -76,6 +77,7 @@ def interpret_fourcode(code):
 
 
 def interpret_fourcode_read(code):
+    """(READ, None, None, VAR)"""
     id, isarr = get_id(code[3])
     symbol = get_symbol_in_table(id)
     symbol.declare_line = code.line
@@ -102,6 +104,7 @@ def interpret_fourcode_read(code):
 
 
 def interpret_fourcode_write(code):
+    """`(WRITE, None, 0/1, STR/VAR/NUM)`"""
     if code[2]: #输出一个变量的值
         _ , value = get_var_value(code[3])
         value = str(value)
@@ -113,6 +116,7 @@ def interpret_fourcode_write(code):
 
 
 def interpret_fourcode_assign(code):
+    """(ASSIGN, VAR, 0/1, STR/VAR/NUM)"""
     to_id,to_isarr = get_id(code[1])
     to_symbol = get_symbol_in_table(to_id)
     if code[2]:#赋值内容为变量的值
@@ -131,6 +135,7 @@ def interpret_fourcode_assign(code):
 
 
 def interpret_fourcode_declare(code):
+    """`(int|float|string, ID, None|lenght, value|None)`"""
     declare_type = code[0]
     symbol = Symbol(code[1],declare_type,level_count)
     init_value = 0 if declare_type == 'int' else 0.0 if declare_type == 'float' else ''
@@ -146,6 +151,7 @@ def interpret_fourcode_declare(code):
 
 
 def interpret_fourcode_op(code):
+    """(OP, left, right|None, result)"""
     op = code[0]
     v1, v2 = get_value(code[1]), get_value(code[2])
     if type(v1)==str or type(v2)==str:
@@ -191,3 +197,4 @@ def run():
 
 if __name__ == '__main__':
     run()
+    input("\nPress enter to quit! ")

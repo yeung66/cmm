@@ -190,6 +190,7 @@ def interpret_index(node):
 
 
 def interpret_condition(node):
+    """解析条件判断语句，条件判断语句由布尔项的与或运算组成，或是条件语句的取反"""
     if node.get_child(0).type=='!':#取反
         result = get_temp_symbol('bool')
         code = FourCode('!',interpret_condition(node.get_child(1)),None,result)
@@ -216,6 +217,7 @@ def interpret_condition(node):
 
 
 def interpret_cond(node):
+    """条件项为表达式的比较，或条件项的取反"""
     result = get_temp_symbol('bool')
     if node.get_child(0).type=='!':#取反
         add_code(FourCode('!', interpret_cond(node.get_child(1)), None, result))
@@ -230,6 +232,7 @@ def interpret_cond(node):
 
 
 def interpret_expr(node):
+    """解析表达式，表达式由项的加减组成，或是表达式取反"""
     if node.get_child(0).type == '-':  #取负数
         result = get_temp_symbol('num')
         c = FourCode('-',interpret_expr(node.get_child(1)),None,result)
@@ -258,6 +261,7 @@ def interpret_expr(node):
 
 
 def interpret_term(node):
+    """解析表达式中的项，项由因子乘除组成"""
     if len(node.child)==1:
         return interpret_factor(node.get_child(0))
     else:
@@ -281,6 +285,7 @@ def interpret_term(node):
 
 
 def interpret_factor(node):
+    """解析因子，因子为数字，变量，或带括号表达式"""
     child = node.get_child(0)
     if child.type == 'NUM':
         return child.value

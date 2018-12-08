@@ -1,5 +1,6 @@
 
 class Token:
+    """词法分析token"""
     def __init__(self,type,name,pos):
         self.type = type
         self.name = name
@@ -9,6 +10,7 @@ class Token:
         print('(%3d  %15s %15s)'%(self.pos[0],self.name,self.type))
 
 class TreeNode:
+    """语法分析树中节点"""
     indent = 0
     def __init__(self,type):
         self.type = type
@@ -39,6 +41,7 @@ class TreeNode:
             TreeNode.indent-=1
 
 class FourCode:
+    """中间代码四元式"""
     def __init__(self,first,second,third,fourth):
         self.__code = [first,second,third,fourth]
         self.line = None
@@ -59,6 +62,7 @@ class FourCode:
 
 
 class Symbol:
+    """符号表中基本单元符号"""
     def __init__(self,name,type,level):
         self.name = name
         self.type = type

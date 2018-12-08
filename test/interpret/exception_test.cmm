@@ -12,5 +12,7 @@ out(a[c]);//使用字符串作为下标
 a[6] = b+c;//字符串参与运算
 a[6] = 12 / 0;//除数为负数
 a[11] = 45;//数组越界
+out("try to input a num to a tring variable!");
 in(c);//对字符串变量输入数字 如123
+out("try to input a string to a num variable!");
 in(b);//对数值变量输入字符串 如"123b"

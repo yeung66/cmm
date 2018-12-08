@@ -10,6 +10,7 @@ def init_symbol_table():
 
 
 def get_symbol_in_table(node):
+    """在符号表查询获取指定符号，若非临时变量不存在，则报错"""
     id = node
     prefix = ''
     if isinstance(node,TreeNode):
@@ -31,6 +32,7 @@ def get_symbol_in_table(node):
 
 
 def get_temp_symbol(type):
+    """获取临时变量*temp"""
     for i in range(1000):
         name = '*temp'+str(i)
         exist = False
@@ -44,7 +46,7 @@ def get_temp_symbol(type):
 
 
 def insert_symbol(symbol,type='symbol_list'):
-
+    """符号表中插入符号"""
     for i,sym in enumerate(symbol_table[type]):
         if sym.name == symbol.name:
             if sym.level >= symbol.level:
