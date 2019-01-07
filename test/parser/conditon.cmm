@@ -1,0 +1,10 @@
+//&&运算
+if(a<b && b<c){
+    in(a);
+}else if(a<b || b<c){// ||运算
+    in(a);
+}else if(!(a<b)){//单个条件项取反
+    in(a);
+}else if(!(a<b && b<c)){//条件表达式结果取反
+    in(a);
+}

@@ -158,7 +158,7 @@ def interpret_assign(node):
     code.line = node.line
     value_node = node.get_child(1)
     if value_node.type=='STR':
-        if symbol.type!='string':#将数值赋给字符串
+        if symbol.type!='string':#将字符串赋给数值变量
             raise SemanticException('Line %d: not match type in assignment statement' % node.line)
         code[2] = 0
         code[3] = value_node.value
@@ -166,7 +166,7 @@ def interpret_assign(node):
         value = interpret_expr(value_node)
         if is_str_symbol_from_expr(value) and symbol.type!='string':#将字符串赋值给数值变量
             raise SemanticException('Line %d: not match type in assignment statement' % node.line)
-        if symbol.type == 'string' and not is_str_symbol_from_expr(value):
+        if symbol.type == 'string' and not is_str_symbol_from_expr(value):#将数值变量赋值给字符串变量
             raise SemanticException('Line %d: not match type in assignment statement' % node.line)
         code[2] = 1 if not is_num(value) else 0
         code[3] = value
@@ -176,7 +176,7 @@ def interpret_assign(node):
             code[1] = code[1]+'['+index+']'
         else:
             arr = '' if symbol.is_array() else 'not '
-            raise SemanticException('Line %d: variable %s is %san array!'%(node.line,node.value,arr))
+            raise SemanticException('Line %d: variable %s is %san array!'%(node.line,symbol.name,arr))
     add_code(code)
 
 

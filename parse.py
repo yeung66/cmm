@@ -37,7 +37,8 @@ def check_next_token(token_name):
         tokens_index+=1
         return node
     else:
-        raise ParseException('line %d: unpected token,should be %s'%(tokens[tokens_index].pos[0],token_name))
+        raise ParseException('line %d index %d: unpected token,should be %s'
+                             %(tokens[tokens_index].pos[0],tokens[tokens_index].pos[1],token_name))
 
 
 def clear_exception():
@@ -195,10 +196,13 @@ def parse_block():
     '''
     new_node = TreeNode('BLOCK')
     new_node.line = tokens[tokens_index].pos[0]
+    leftbrace = get_next_token()
     check_next_token('{')
-    while get_next_token().name!='}':
+    while get_next_token().name!='END' and get_next_token().name!='}':
         stmt = parse_stmt()
         if stmt:new_node.add_child(stmt)
+    if get_next_token().name=='END':
+        raise ParseException("Not matched closed } for { at line %d" %leftbrace.pos[0])
     check_next_token('}')
     return new_node
 

@@ -55,6 +55,6 @@ def output_exception():
         RunningError: 'RunningError',
     }
     if len(exceptions)!=0:
-        print('Exceptions:')
+        print('\nExceptions:')
         for t,e in exceptions:
             print(s[t],' in ',e)

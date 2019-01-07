@@ -45,13 +45,16 @@ def is_index_valid(symbol,index):
         index_symbol = get_symbol_in_table(index)
         if index_symbol.type in ['NUM','int','float','temp']:
             if int(index_symbol.value)!=index_symbol.value:#判断下标是否为整数
-                raise RunningError('Line %d: index %d of variable %s is float point number' % (symbol.declare_line,index_symbol.value, symbol.name))
+                raise RunningError('Line %d: index %s of variable %s is float point number'
+                                   % (symbol.declare_line,index_symbol.value, symbol.name))
             if -1 < index_symbol.value < len(symbol.arr):#判断数组是否越界
                 return int(index_symbol.value)
             else:
-                raise RunningError('Line %d: index %d out of bound in variable %s'%(symbol.declare_line,index_symbol.value,symbol.name))
+                raise RunningError('Line %d: index %s out of bound in variable %s'
+                                   %(symbol.declare_line,str(index_symbol.value),symbol.name))
         else:
-            raise RunningError('Line %d: variable %s\'s index should be a non-negetive integer'%(symbol.declare_line,symbol.name))
+            raise RunningError('Line %d: variable %s\'s index should be a non-negetive integer'%
+                               (symbol.declare_line,symbol.name))
 
 
 def interpret_fourcode(code):

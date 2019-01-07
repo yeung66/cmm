@@ -1,0 +1,5 @@
+int a=10;
+float[2] b;
+string c="asd";
+in(b);
+out(c);
