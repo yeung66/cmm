@@ -1,6 +1,6 @@
 # CMM语言解释器
 
-[![](https://img.shields.io/github/repo-size/yeung66/cmm.svg)] [![](https://img.shields.io/github/stars/yeung66/cmm.svg?style=social)
+![](https://img.shields.io/github/repo-size/yeung66/cmm.svg)![](https://img.shields.io/github/stars/yeung66/cmm.svg?style=social)
 
 本项目为武汉大学计算机学院软件工程专业大三课程《解释器构造与实践》的课程项目。
 
@@ -43,29 +43,29 @@ python interpreter.py filename.cmm
 #### 语句与块
 
 - STMT -> VARDECL | ASSIGNSTMT | IFSTMT | WHILESTMT | INSTMT |OUTSTMT
-- BLOCK -> __{__STMTS**}**
+- BLOCK -> __{__ STMTS **}**
 
 #### 变量声明
 
 - VARDECL ->NUMTYPE NUMVARLIST __;__ |
 
-  ​			ARRAYTYPE VARLIST__;__|
+  ​			ARRAYTYPE VARLIST __;__|
 
-  ​			__string__ STRVARLIST__;__
+  ​			__string__ STRVARLIST __;__
 
 - NUMTYPE-> __int__ | __float__  
 
 - ARRAYTYPE -> __int[NUM]__ | __float[NUM]__| __string[NUM]__
 
-- VARLIST -> __ID__ OTHERID__;__
+- VARLIST -> __ID__ OTHERID __;__
 
 - OTHERID -> __, ID__ OTHERID | $\varepsilon$
 
-- NUMVARLIST -> __ID__ OTHERNUMID__;__ | __ID__ __=__ EXPR OTHERNUMID__;__ 
+- NUMVARLIST -> __ID__ OTHERNUMID __;__ | __ID__ __=__ EXPR OTHERNUMID __;__ 
 
 - OTHERNUMID-> __, ID__ OTHERNUMID | __, ID__ __=__ EXPR OTHERNUMID |$\varepsilon$
 
-- STRVARLIST-> __ID__ OTHERSTRID__;__  | __ID__ __=__ __STR__ OTHERSTRID__;__ 
+- STRVARLIST-> __ID__ OTHERSTRID __;__  | __ID__ __=__ __STR__ OTHERSTRID __;__ 
 
 - OTHERSTRID-> __, ID__ OTHERSTRID| __, ID__ __=__ __STR__ OTHERSTRID |$\varepsilon$
 
@@ -83,9 +83,9 @@ python interpreter.py filename.cmm
 
 #### 循环语句
 
-- WHILESTMT-> __while (__ CONDITION__)__ BLOCK | 
+- WHILESTMT-> __while (__ CONDITION __)__ BLOCK | 
 
-  ​			  __while (__ CONDITION__)__ STMT
+  ​			  __while (__ CONDITION __)__ STMT
 
 #### 输入输出
 
@@ -102,8 +102,8 @@ python interpreter.py filename.cmm
 
 #### 表达式
 
-- EXPR->TERM OTHERTERM | __-__EXPR
-- OTHERTERM->__+__ TERM OTHERTERM| __-__ TERM OTHERTERM | $\varepsilon$
+- EXPR->TERM OTHERTERM | __-__ EXPR
+- OTHERTERM->__+__ TERM OTHERTERM| __-__ TERM OTHERTERM | $\varepsilon​$
 - TERM -> FACTOR OTHERFACTOR
 - OTHERFACTOR->__*__ FACTOR OTHERFACTOR |__/__ FACTOR OTHERFACTOR | $\varepsilon$
 - FACTOR-> VAR | __NUM__|  __(__EXPR__)__
@@ -128,4 +128,3 @@ python interpreter.py filename.cmm
 - `(int|float|string, ID, None|lenght, value|None)` 
 
   声明 第三元为数字时为声明数组，第四元不为空时表示初始化
-
