@@ -1,6 +1,6 @@
 # CMM语言解释器
 
-![](https://img.shields.io/github/repo-size/yeung66/cmm.svg)![](https://img.shields.io/github/stars/yeung66/cmm.svg?style=social)
+![](https://img.shields.io/github/repo-size/yeung66/cmm.svg)![](https://img.shields.io/github/license/yeung66/cmm.svg)
 
 本项目为武汉大学计算机学院软件工程专业大三课程《解释器构造与实践》的课程项目。
 
